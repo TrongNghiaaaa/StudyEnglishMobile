@@ -1,0 +1,227 @@
+[
+  {
+    "id": "1",
+    "content": "Think of all the beauty still left around you and be happy.",
+    "author": "Anne Frank",
+    "author_id": "anne_frank",
+    "quote": "beauty and happiness",
+    "tag": ["beauty", "happiness", "life"],
+    "length": 70
+  },
+  {
+    "id": "2",
+    "content": "Love all, trust a few, do wrong to none.",
+    "author": "William Shakespeare",
+    "author_id": "william_shakespeare",
+    "quote": "love and trust",
+    "tag": ["love", "trust", "wisdom"],
+    "length": 40
+  },
+  {
+    "id": "3",
+    "content": "The only way to do great work is to love what you do.",
+    "author": "Steve Jobs",
+    "author_id": "steve_jobs",
+    "quote": "love your work",
+    "tag": ["work", "love", "motivation"],
+    "length": 55
+  },
+  {
+    "id": "4",
+    "content": "In the end, we only regret the chances we didn’t take.",
+    "author": "Lewis Carroll",
+    "author_id": "lewis_carroll",
+    "quote": "take chances",
+    "tag": ["regret", "courage", "life"],
+    "length": 60
+  },
+  {
+    "id": "5",
+    "content": "Happiness is not something ready made. It comes from your own actions.",
+    "author": "Dalai Lama",
+    "author_id": "dalai_lama",
+    "quote": "happiness and action",
+    "tag": ["happiness", "mind", "peace"],
+    "length": 75
+  },
+  {
+    "id": "6",
+    "content": "Be yourself; everyone else is already taken.",
+    "author": "Oscar Wilde",
+    "author_id": "oscar_wilde",
+    "quote": "be yourself",
+    "tag": ["confidence", "individuality"],
+    "length": 48
+  },
+  {
+    "id": "7",
+    "content": "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+    "author": "Winston Churchill",
+    "author_id": "winston_churchill",
+    "quote": "success and courage",
+    "tag": ["success", "failure", "courage"],
+    "length": 88
+  },
+  {
+    "id": "8",
+    "content": "Life is what happens when you're busy making other plans.",
+    "author": "John Lennon",
+    "author_id": "john_lennon",
+    "quote": "life and plans",
+    "tag": ["life", "time"],
+    "length": 60
+  },
+  {
+    "id": "9",
+    "content": "The purpose of our lives is to be happy.",
+    "author": "Dalai Lama",
+    "author_id": "dalai_lama",
+    "quote": "purpose and happiness",
+    "tag": ["happiness", "life"],
+    "length": 45
+  },
+  {
+    "id": "10",
+    "content": "The greatest glory in living lies not in never falling, but in rising every time we fall.",
+    "author": "Nelson Mandela",
+    "author_id": "nelson_mandela",
+    "quote": "glory and resilience",
+    "tag": ["resilience", "life", "success"],
+    "length": 90
+  },
+  {
+    "id": "11",
+    "content": "It is our choices that show what we truly are, far more than our abilities.",
+    "author": "J.K. Rowling",
+    "author_id": "jk_rowling",
+    "quote": "choices reveal us",
+    "tag": ["choices", "life", "character"],
+    "length": 80
+  },
+  {
+    "id": "12",
+    "content": "You miss 100% of the shots you don't take.",
+    "author": "Wayne Gretzky",
+    "author_id": "wayne_gretzky",
+    "quote": "take the shot",
+    "tag": ["motivation", "risk", "sports"],
+    "length": 45
+  },
+  {
+    "id": "13",
+    "content": "Life isn’t about waiting for the storm to pass, it’s about learning to dance in the rain.",
+    "author": "Vivian Greene",
+    "author_id": "vivian_greene",
+    "quote": "dance in the rain",
+    "tag": ["life", "courage", "hope"],
+    "length": 95
+  },
+  {
+    "id": "14",
+    "content": "The best way to predict your future is to create it.",
+    "author": "Abraham Lincoln",
+    "author_id": "abraham_lincoln",
+    "quote": "create your future",
+    "tag": ["future", "motivation", "success"],
+    "length": 55
+  },
+  {
+    "id": "15",
+    "content": "Don’t let yesterday take up too much of today.",
+    "author": "Will Rogers",
+    "author_id": "will_rogers",
+    "quote": "live today",
+    "tag": ["life", "present", "focus"],
+    "length": 50
+  },
+  {
+    "id": "16",
+    "content": "Act as if what you do makes a difference. It does.",
+    "author": "William James",
+    "author_id": "william_james",
+    "quote": "make a difference",
+    "tag": ["inspiration", "purpose"],
+    "length": 55
+  },
+  {
+    "id": "17",
+    "content": "Keep your face always toward the sunshine—and shadows will fall behind you.",
+    "author": "Walt Whitman",
+    "author_id": "walt_whitman",
+    "quote": "face the sunshine",
+    "tag": ["hope", "positivity"],
+    "length": 80
+  },
+  {
+    "id": "18",
+    "content": "We generate fears while we sit. We overcome them by action.",
+    "author": "Dr. Henry Link",
+    "author_id": "henry_link",
+    "quote": "overcome fear by action",
+    "tag": ["fear", "action", "motivation"],
+    "length": 60
+  },
+  {
+    "id": "19",
+    "content": "The only limit to our realization of tomorrow is our doubts of today.",
+    "author": "Franklin D. Roosevelt",
+    "author_id": "fdr",
+    "quote": "limit of tomorrow",
+    "tag": ["future", "motivation", "hope"],
+    "length": 75
+  },
+  {
+    "id": "20",
+    "content": "In the middle of every difficulty lies opportunity.",
+    "author": "Albert Einstein",
+    "author_id": "albert_einstein",
+    "quote": "opportunity in difficulty",
+    "tag": ["opportunity", "difficulty", "life"],
+    "length": 60
+  },
+  {
+    "id": "21",
+    "content": "A person who never made a mistake never tried anything new.",
+    "author": "Albert Einstein",
+    "author_id": "albert_einstein",
+    "quote": "learn from mistakes",
+    "tag": ["mistake", "learning", "innovation"],
+    "length": 65
+  },
+  {
+    "id": "22",
+    "content": "Nothing is impossible. The word itself says 'I’m possible!'",
+    "author": "Audrey Hepburn",
+    "author_id": "audrey_hepburn",
+    "quote": "impossible is possible",
+    "tag": ["motivation", "belief"],
+    "length": 55
+  },
+  {
+    "id": "23",
+    "content": "Do what you can, with what you have, where you are.",
+    "author": "Theodore Roosevelt",
+    "author_id": "theodore_roosevelt",
+    "quote": "do what you can",
+    "tag": ["action", "focus"],
+    "length": 55
+  },
+  {
+    "id": "24",
+    "content": "It always seems impossible until it's done.",
+    "author": "Nelson Mandela",
+    "author_id": "nelson_mandela",
+    "quote": "impossible until done",
+    "tag": ["motivation", "success"],
+    "length": 50
+  },
+  {
+    "id": "25",
+    "content": "If you want to lift yourself up, lift up someone else.",
+    "author": "Booker T. Washington",
+    "author_id": "booker_washington",
+    "quote": "help others",
+    "tag": ["kindness", "help", "inspiration"],
+    "length": 60
+  }
+]
