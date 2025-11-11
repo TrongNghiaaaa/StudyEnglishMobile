@@ -9,6 +9,7 @@ import '../../value/app_text_style.dart';
 
 class DrawerWidget extends StatelessWidget {
   final List<EnglishToday> wordFavorite;
+
   final VoidCallbackAction? onTap;
   const DrawerWidget({super.key, required this.wordFavorite, this.onTap});
 

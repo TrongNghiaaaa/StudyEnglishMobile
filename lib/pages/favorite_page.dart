@@ -52,16 +52,36 @@ class _FavoritePageState extends State<FavoritePage> {
                   itemCount: widget.wordFavorite.length,
                   itemBuilder: (context, index) {
                     final word = widget.wordFavorite[index];
+                    final quote = word.quote ?? 'No quote available.';
+                    final Color? cardColor;
+
+                    if (index % 2 == 0) {
+                      cardColor = AppColors.primaryColor;
+                    } else {
+                      cardColor = AppColors.cardContainerColor;
+                    }
                     return Card(
-                      color: AppColors.cardContainerColor,
+                      color: cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       child: ListTile(
                         title: Text(
-                          word.noun ?? '',
+                          word.noun ?? 'No word available.',
                           style: AppTextStyle.title.copyWith(
-                            fontSize: 18,
                             color: Colors.white,
                           ),
+                        ),
+                        subtitle: Text(
+                          quote,
+                          style: AppTextStyle.bodyMedium.copyWith(
+                            color: Colors.white,
+                          ),
+                        ),
+                        leading: const Icon(
+                          Icons.favorite,
+                          color: Colors.white,
                         ),
                       ),
                     );

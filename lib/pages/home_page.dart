@@ -14,6 +14,7 @@ import 'package:flutter_app_day1/value/app_colors.dart';
 import 'package:flutter_app_day1/value/app_text_style.dart';
 import 'package:flutter_app_day1/value/share_keys.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 
 // ADD: import nguồn quotes (repo/singleton bạn đã viết)
 
@@ -51,6 +52,122 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget _quoteShimmer(BuildContext context, Size size) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[200]!,
+      highlightColor: Colors.grey[600]!,
+      child: Container(
+        width: double.infinity,
+        height: size.height * 0.1,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  Widget _cardShimmer(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[600]!,
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[700],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // tim
+            Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white24,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // chữ to (word)
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // quote 2-3 dòng
+            Container(height: 14, color: Colors.white24),
+            const SizedBox(height: 8),
+            Container(height: 14, width: 220, color: Colors.white24),
+            const SizedBox(height: 8),
+            Container(height: 12, width: 100, color: Colors.white24), // author
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pageViewShimmer(BuildContext context, Size size) {
+    return SizedBox(
+      width: double.infinity,
+      height: size.height * 0.5,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        itemBuilder:
+            (_, __) =>
+                SizedBox(width: size.width * 0.9, child: _cardShimmer(context)),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemCount: 3,
+      ),
+    );
+  }
+
+  Widget _indicatorShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[600]!,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          5,
+          (i) => Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
+            width: i == 0 ? 16 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: Colors.grey[700],
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<int> fixedListRandom({int len = 1, int min = 0, int max = 100}) {
     if (min > max) {
       throw ArgumentError('min phải <= max'); // FIX
@@ -74,7 +191,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> getEnglishToday() async {
     setState(() => isReloading = true);
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 500));
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     int lenYourControlKey =
         prefs.getInt(ShareKeys.numberOfWords) ?? 5; // FIX: lấy số từ đã lưu
@@ -147,9 +264,13 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child:
             isLoading
-                ? const Center(
-                  // FIX: loading khi chưa đủ dữ liệu
-                  child: CircularProgressIndicator(),
+                ? Column(
+                  children: [
+                    _quoteShimmer(context, size),
+                    const SizedBox(height: 8),
+                    _pageViewShimmer(context, size),
+                    _indicatorShimmer(),
+                  ],
                 )
                 : Column(
                   children: [
@@ -332,9 +453,15 @@ class _HomePageState extends State<HomePage> {
       ),
       drawer: DrawerWidget(
         wordFavorite:
-            _favoriteIndexes
-                .map((i) => words[i])
-                .toList(), // FIX: truyền từ yêu thích
+            _favoriteIndexes.map((i) {
+              final w = words[i];
+              final q = wordQuotes[i];
+              return EnglishToday(
+                noun: w.noun,
+                quote: (q.content ?? q.quote) ?? '',
+                author: q.author ?? '',
+              );
+            }).toList(),
       ),
     );
   }
