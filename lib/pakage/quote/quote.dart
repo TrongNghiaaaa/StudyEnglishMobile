@@ -1,25 +1,23 @@
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:flutter/services.dart';
-import 'quote_model.dart';
+import 'package:flutter_app_day1/pakage/quote/quote_model.dart';
+import 'package:flutter_app_day1/value/app_ui_path.dart';
 
 class Quotes {
   static final Quotes _instance = Quotes._internal();
   static List<QuoteModel> datas = [];
+  final String pathDataQuote = AppUI.quotesData;
 
   factory Quotes() => _instance;
   Quotes._internal();
 
   Future<void> getAll() async {
-    try {
-      final String response = await rootBundle.loadString('assets/quotes.json');
-      final List<dynamic> jsonData = jsonDecode(response);
+    final String response = await rootBundle.loadString(pathDataQuote);
+    final List<dynamic> jsonData = jsonDecode(response);
 
-      datas = jsonData.map((e) => QuoteModel.fromJson(e)).toList();
-      print('Quotes loaded: ${datas.length}'); // ✅ Debug
-    } catch (e) {
-      print('Error loading quotes: $e');
-    }
+    datas = jsonData.map((e) => QuoteModel.fromJson(e)).toList();
   }
 
   QuoteModel getByWord(String word) {

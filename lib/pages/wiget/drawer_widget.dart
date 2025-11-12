@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app_day1/model/englist_today.dart';
 import 'package:flutter_app_day1/pages/control_page.dart';
 import 'package:flutter_app_day1/pages/favorite_page.dart';
-import 'package:flutter_app_day1/pages/wiget/app_button.dart';
+import 'package:flutter_app_day1/value/app_button.dart';
 import 'package:flutter_app_day1/value/app_colors.dart';
 
 import '../../value/app_text_style.dart';

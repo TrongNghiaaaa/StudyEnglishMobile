@@ -68,7 +68,6 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/fonts/
-    - assets/quotes.json
     - assets/jsons/
 
   #   - images/a_dot_ham.jpeg

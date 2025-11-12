@@ -13,10 +13,9 @@ import 'package:flutter_app_day1/pakage/quote/quote_model.dart';
 import 'package:flutter_app_day1/value/app_colors.dart';
 import 'package:flutter_app_day1/value/app_text_style.dart';
 import 'package:flutter_app_day1/value/share_keys.dart';
+import 'package:like_button/like_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
-
-// ADD: import nguồn quotes (repo/singleton bạn đã viết)
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,62 +25,179 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentPage = 0;
-  bool isFavorite = false;
-  QuoteModel? randomQuote; // ✅
+  // -------------------------------
+  // State (đổi tên tường minh)
+  // -------------------------------
+  int _currentPageIndex = 0;
+  bool _isReloading = false;
 
   late final PageController _pageController;
 
-  List<EnglishToday> words = [];
-  // ADD: giữ danh sách quote tương ứng với từng word (cùng index)
-  List<QuoteModel> wordQuotes = []; // <-- mỗi phần tử khớp với words[i]
-  final Set<int> _favoriteIndexes = {}; // mỗi trang 1 index
-  QuoteModel? randomQuotes;
+  /// Danh sách word đã nhồi kèm quote/author (tránh dùng 2 list song song).
+  List<EnglishToday> _wordCards = [];
 
-  bool isFav(int index) {
-    return _favoriteIndexes.contains(index);
-  }
+  /// Set các từ đã yêu thích (lưu theo chính noun để không lệch index khi reload).
+  final Set<String> _favoriteWordSet = {};
 
-  void toggleFav(int index) {
-    setState(() {
-      if (isFav(index)) {
-        _favoriteIndexes.remove(index);
-      } else {
-        _favoriteIndexes.add(index);
-      }
+  /// Câu quote ngẫu nhiên cho header.
+  QuoteModel? _randomHeaderQuote;
+
+  /// Local cache prefs
+  late SharedPreferences _prefs;
+
+  // -------------------------------
+  // Lifecycle
+  // -------------------------------
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 0.9);
+
+    // Load SharedPreferences & favorites trước, rồi mới load dữ liệu
+    SharedPreferences.getInstance().then((p) {
+      _prefs = p;
+      _favoriteWordSet
+        ..clear()
+        ..addAll(_prefs.getStringList(ShareKeys.favoriteWords) ?? []);
+      _loadRandomWordCards(); // sau khi có favorites trong bộ nhớ
     });
   }
 
-  Widget _quoteShimmer(BuildContext context, Size size) {
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  // -------------------------------
+  // Helpers: Random & Persist
+  // -------------------------------
+  List<int> _uniqueRandomIndexes({
+    required int length,
+    int min = 0,
+    required int max,
+  }) {
+    if (min > max) {
+      throw ArgumentError('min phải <= max');
+    }
+    final range = max - min + 1;
+    if (length < 0 || length > range) {
+      throw ArgumentError('length phải trong [0..$range] (không trùng)');
+    }
+    final rnd = Random();
+    final set = <int>{};
+    while (set.length < length) {
+      set.add(min + rnd.nextInt(range));
+    }
+    return set.toList();
+  }
+
+  Future<void> _saveFavorites() async {
+    await _prefs.setStringList(
+      ShareKeys.favoriteWords,
+      _favoriteWordSet.toList(),
+    );
+  }
+
+  // -------------------------------
+  // Loading dữ liệu chính
+  // -------------------------------
+  Future<void> _loadRandomWordCards() async {
+    if (!mounted) return;
+    setState(() => _isReloading = true);
+
+    // giả lập chờ API
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final wordCount = _prefs.getInt(ShareKeys.numberOfWords) ?? 5;
+    final indexes = _uniqueRandomIndexes(
+      length: wordCount,
+      min: 0,
+      max: nouns.length - 1,
+    );
+    final selectedNouns = indexes.map((i) => nouns[i]).toList();
+
+    // Nhồi quote/author vào EnglishToday (tránh 2 list song song)
+    final composed = <EnglishToday>[];
+    for (final w in selectedNouns) {
+      final q = Quotes().getByWord(w);
+      composed.add(
+        EnglishToday(
+          noun: w,
+          quote: (q.content ?? q.quote) ?? '',
+          author: q.author ?? '',
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _wordCards = composed;
+      _randomHeaderQuote = Quotes().getRandom();
+      _isReloading = false;
+    });
+  }
+
+  // -------------------------------
+  // Favorite logic (theo noun)
+  // -------------------------------
+  bool _isFavoriteByIndex(int index) {
+    if (index < 0 || index >= _wordCards.length) return false;
+    final noun = _wordCards[index].noun ?? '';
+    return noun.isNotEmpty && _favoriteWordSet.contains(noun);
+  }
+
+  void _toggleFavoriteByIndex(int index) {
+    if (index < 0 || index >= _wordCards.length) return;
+    final noun = _wordCards[index].noun ?? '';
+    if (noun.isEmpty) return;
+
+    setState(() {
+      if (_favoriteWordSet.contains(noun)) {
+        _favoriteWordSet.remove(noun);
+      } else {
+        _favoriteWordSet.add(noun);
+      }
+    });
+    _saveFavorites();
+  }
+
+  // -------------------------------
+  // Shimmer widgets (theo theme dark)
+  // -------------------------------
+  Widget _buildQuoteShimmer(Size size) {
+    final base = Colors.grey.shade800;
+    final hi = Colors.grey.shade600;
     return Shimmer.fromColors(
-      baseColor: Colors.grey[200]!,
-      highlightColor: Colors.grey[600]!,
+      baseColor: base,
+      highlightColor: hi,
       child: Container(
         width: double.infinity,
         height: size.height * 0.1,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: base,
           borderRadius: BorderRadius.circular(12),
         ),
       ),
     );
   }
 
-  Widget _cardShimmer(BuildContext context) {
+  Widget _buildCardShimmer() {
+    final base = Colors.grey.shade800;
+    final hi = Colors.grey.shade600;
     return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[600]!,
+      baseColor: base,
+      highlightColor: hi,
       child: Container(
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[700],
+          color: base,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // tim
             Align(
               alignment: Alignment.centerRight,
               child: Container(
@@ -94,7 +210,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 12),
-            // chữ to (word)
             Row(
               children: [
                 Container(
@@ -118,19 +233,18 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
             const SizedBox(height: 16),
-            // quote 2-3 dòng
             Container(height: 14, color: Colors.white24),
             const SizedBox(height: 8),
             Container(height: 14, width: 220, color: Colors.white24),
             const SizedBox(height: 8),
-            Container(height: 12, width: 100, color: Colors.white24), // author
+            Container(height: 12, width: 100, color: Colors.white24),
           ],
         ),
       ),
     );
   }
 
-  Widget _pageViewShimmer(BuildContext context, Size size) {
+  Widget _buildPageViewShimmer(Size size) {
     return SizedBox(
       width: double.infinity,
       height: size.height * 0.5,
@@ -139,17 +253,17 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 8),
         itemBuilder:
             (_, __) =>
-                SizedBox(width: size.width * 0.9, child: _cardShimmer(context)),
+                SizedBox(width: size.width * 0.9, child: _buildCardShimmer()),
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemCount: 3,
       ),
     );
   }
 
-  Widget _indicatorShimmer() {
+  Widget _buildIndicatorShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[600]!,
+      baseColor: AppColors.indicatorBaseColor,
+      highlightColor: AppColors.indicatorHighlightColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
@@ -159,7 +273,7 @@ class _HomePageState extends State<HomePage> {
             width: i == 0 ? 16 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: Colors.grey[700],
+              color: AppColors.indicatorBaseColor,
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -168,85 +282,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  List<int> fixedListRandom({int len = 1, int min = 0, int max = 100}) {
-    if (min > max) {
-      throw ArgumentError('min phải <= max'); // FIX
-    }
-    final range = max - min + 1; // FIX
-    if (len < 0 || len > range) {
-      throw ArgumentError('len phải trong 0..$range (không trùng)'); // FIX
-    }
-    final rnd = Random();
-    final set = <int>{};
-    while (set.length < len) {
-      final val = min + rnd.nextInt(range); // FIX: [min, max]
-      set.add(val); // đảm bảo không trùng
-    }
-    return set.toList();
-  }
-
-  // FIX: Lấy noun theo index hợp lệ rồi map sang EnglishToday
-
-  bool isReloading = false;
-
-  Future<void> getEnglishToday() async {
-    setState(() => isReloading = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    int lenYourControlKey =
-        prefs.getInt(ShareKeys.numberOfWords) ?? 5; // FIX: lấy số từ đã lưu
-
-    final rans = fixedListRandom(
-      len: lenYourControlKey,
-      min: 0,
-      max: nouns.length - 1,
-    );
-    final selected = rans.map((i) => nouns[i]).toList();
-
-    final qts = <QuoteModel>[];
-    for (final w in selected) {
-      qts.add(Quotes().getByWord(w));
-    }
-
-    setState(() {
-      words = selected.map((e) => EnglishToday(noun: e)).toList();
-      wordQuotes = qts;
-      randomQuote = Quotes().getRandom(); // ✅
-      isReloading = false;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(
-      viewportFraction: 0.9, // FIX: tạo khe 2 bên
-    );
-    getEnglishToday(); // FIX: gọi để có data trước khi build
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose(); // FIX
-
-    super.dispose();
-  }
-
+  // -------------------------------
+  // Build
+  // -------------------------------
   @override
   Widget build(BuildContext context) {
-    final rq = randomQuote;
     final size = MediaQuery.of(context).size;
-
-    final isLoading =
-        words.isEmpty ||
-        wordQuotes.length != words.length; // ADD: chờ đủ cả 2 list
+    final headerQuote = _randomHeaderQuote;
+    final isLoading = _isReloading || _wordCards.isEmpty;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
       appBar: CommonAppBar(
         elevation: 0,
         backgroundColor: AppColors.backgroundColor,
-
         title: Text(
           'English Today',
           style: AppTextStyle.display.copyWith(fontSize: 24),
@@ -260,28 +309,50 @@ class _HomePageState extends State<HomePage> {
               ),
         ),
       ),
+      drawer: DrawerWidget(
+        wordFavorite:
+            _wordCards
+                .where(
+                  (w) => w.noun != null && _favoriteWordSet.contains(w.noun!),
+                )
+                .map((w) {
+                  // đã có quote/author trong EnglishToday rồi, nhưng nếu muốn sync lại:
+                  final q = Quotes().getByWord(w.noun!);
+                  return EnglishToday(
+                    noun: w.noun,
+                    quote: (q.content ?? q.quote) ?? w.quote ?? '',
+                    author: q.author ?? w.author ?? '',
+                  );
+                })
+                .toList(),
+      ),
+      floatingActionButton: FloatingActionButtonWidget(
+        onReload: _loadRandomWordCards,
+        isReloading: _isReloading,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child:
             isLoading
                 ? Column(
                   children: [
-                    _quoteShimmer(context, size),
+                    _buildQuoteShimmer(size),
                     const SizedBox(height: 8),
-                    _pageViewShimmer(context, size),
-                    _indicatorShimmer(),
+                    RepaintBoundary(child: _buildPageViewShimmer(size)),
+                    _buildIndicatorShimmer(),
                   ],
                 )
                 : Column(
                   children: [
+                    // Header quote
                     SizedBox(
                       width: double.infinity,
                       height: size.height * 0.1,
                       child: Text(
+                        '"${headerQuote?.content ?? 'No quotes available yet.'}"',
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.start,
-                        '"${rq?.content ?? 'No quotes available yet.'}"',
                         style: AppTextStyle.bodyMedium.copyWith(
                           color: AppColors.textColor,
                           fontSize: 18,
@@ -289,87 +360,96 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const SizedBox(height: 8),
+
+                    // PageView word cards
                     SizedBox(
                       width: double.infinity,
                       height: size.height * 0.5,
                       child: PageView.builder(
                         controller: _pageController,
-                        onPageChanged:
-                            (index) => setState(() {
-                              _currentPage = index;
-                            }),
-                        itemCount: words.length, // FIX
                         padEnds: true,
+                        itemCount: _wordCards.length,
+                        onPageChanged: (i) {
+                          if (!mounted) return;
+                          setState(() => _currentPageIndex = i);
+                        },
                         itemBuilder: (context, index) {
-                          // FIX: cắt chữ an toàn
-                          final noun = words[index].noun ?? '';
+                          final word = _wordCards[index];
+                          final noun = word.noun ?? '';
                           final firstLetter = noun.isNotEmpty ? noun[0] : '';
                           final leftLetters =
                               noun.length > 1 ? noun.substring(1) : '';
-
-                          // ADD: lấy quote tương ứng (đã chuẩn bị sẵn)
-                          final quote = wordQuotes[index];
-                          final quoteText =
-                              (quote.content ??
-                                  quote.quote ??
-                                  ''); // ưu tiên content
-                          final author = quote.author ?? '';
+                          final quoteText = word.quote ?? '';
+                          final author = word.author ?? '';
 
                           return Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Material(
                               color: AppColors.cardContainerColor,
                               elevation: 4,
-                              borderRadius: BorderRadius.all(
+                              borderRadius: const BorderRadius.all(
                                 Radius.circular(16),
                               ),
                               child: InkWell(
-                                splashColor: Colors.black12,
-
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(16),
-                                ),
-                                onTap: () async {
-                                  toggleFav(index);
-                                },
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => _toggleFavoriteByIndex(index),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
-
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.stretch,
                                     children: [
+                                      // Like button (góc phải)
                                       Align(
                                         alignment: Alignment.centerRight,
-                                        child: InkWell(
-                                          onTap: () {
-                                            toggleFav(index);
+                                        child: LikeButton(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          size: 42,
+                                          isLiked: _isFavoriteByIndex(index),
+                                          onTap: (isLiked) async {
+                                            _toggleFavoriteByIndex(index);
+                                            return !isLiked;
                                           },
-                                          child: Icon(
-                                            Icons.favorite,
-                                            color:
-                                                isFav(index)
-                                                    ? Colors.red
-                                                    : Colors.white,
-                                            size: 40,
+                                          circleColor: const CircleColor(
+                                            start: AppColors.likeCircleStart,
+                                            end: AppColors.likeCircleEnd,
                                           ),
+                                          bubblesColor: const BubblesColor(
+                                            dotPrimaryColor:
+                                                AppColors.likeDotPrimary,
+                                            dotSecondaryColor:
+                                                AppColors.likeDotSecondary,
+                                          ),
+                                          likeBuilder:
+                                              (bool isLiked) => Icon(
+                                                Icons.favorite,
+                                                color:
+                                                    isLiked
+                                                        ? AppColors
+                                                            .likeCircleEnd
+                                                        : AppColors.whiteColor,
+                                                size: 42,
+                                              ),
                                         ),
                                       ),
+
+                                      // Word (đầu to + phần còn lại)
                                       Align(
                                         alignment: Alignment.centerLeft,
                                         child: RichText(
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.start,
                                           text: TextSpan(
                                             text: firstLetter,
                                             style: AppTextStyle.display
                                                 .copyWith(
-                                                  color: Colors.white,
+                                                  color: AppColors.whiteColor,
                                                   fontSize: 79,
                                                   shadows: const [
                                                     Shadow(
-                                                      color: Colors.black38,
+                                                      color:
+                                                          AppColors.shadowColor,
                                                       offset: Offset(3, 6),
                                                       blurRadius: 6,
                                                     ),
@@ -380,11 +460,14 @@ class _HomePageState extends State<HomePage> {
                                                 text: leftLetters,
                                                 style: AppTextStyle.display
                                                     .copyWith(
-                                                      color: Colors.white,
+                                                      color:
+                                                          AppColors.whiteColor,
                                                       fontSize: 56,
                                                       shadows: const [
                                                         Shadow(
-                                                          color: Colors.black38,
+                                                          color:
+                                                              AppColors
+                                                                  .shadowColor,
                                                           offset: Offset(3, 6),
                                                           blurRadius: 6,
                                                         ),
@@ -395,8 +478,10 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                       ),
+
                                       const SizedBox(height: 16),
-                                      // ADD: hiển thị quote theo word
+
+                                      // Quote
                                       Text(
                                         '"$quoteText"',
                                         maxLines: 3,
@@ -407,6 +492,7 @@ class _HomePageState extends State<HomePage> {
                                           fontSize: 18,
                                         ),
                                       ),
+
                                       if (author.isNotEmpty) ...[
                                         const SizedBox(height: 8),
                                         Text(
@@ -414,7 +500,8 @@ class _HomePageState extends State<HomePage> {
                                           textAlign: TextAlign.right,
                                           style: AppTextStyle.bodyMedium
                                               .copyWith(
-                                                color: Colors.white70,
+                                                color: AppColors.whiteColor
+                                                    .withOpacity(0.7),
                                                 fontSize: 14,
                                                 fontStyle: FontStyle.italic,
                                               ),
@@ -429,15 +516,15 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
                     ),
-                    // Sau PageView.builder
-                    _currentPage >= 5
-                        ? showMoreButton(context, words)
+
+                    // Indicator / Show more
+                    _currentPageIndex >= 5
+                        ? _buildShowMoreButton(context, _wordCards)
                         : Center(
                           child: TikTokSlidingWindowIndicator(
-                            totalCount: words.length, // tổng số trang
-                            currentIndex:
-                                _currentPage, // index hiện tại (onPageChanged cập nhật)
-                            visibleCount: 5, // luôn chỉ 5 chấm hiển thị
+                            totalCount: _wordCards.length,
+                            currentIndex: _currentPageIndex,
+                            visibleCount: 5,
                             activeColor: AppColors.secondaryColor,
                             inactiveColor: Colors.grey[500]!,
                           ),
@@ -445,52 +532,29 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
       ),
-      floatingActionButton: FloatingActionButtonWidget(
-        onReload: () async {
-          await getEnglishToday();
+    );
+  }
+
+  // Nút "Show more"
+  Widget _buildShowMoreButton(BuildContext context, List<EnglishToday> words) {
+    return Material(
+      color: AppColors.cardContainerColor,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: InkWell(
+        borderRadius: const BorderRadius.all(Radius.circular(24)),
+        splashColor: Colors.black38,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => AllWordsPage(words: words)),
+          );
         },
-        isReloading: isReloading,
-      ),
-      drawer: DrawerWidget(
-        wordFavorite:
-            _favoriteIndexes.map((i) {
-              final w = words[i];
-              final q = wordQuotes[i];
-              return EnglishToday(
-                noun: w.noun,
-                quote: (q.content ?? q.quote) ?? '',
-                author: q.author ?? '',
-              );
-            }).toList(),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Text('Show more', style: AppTextStyle.label),
+        ),
       ),
     );
   }
-}
-
-Widget showMoreButton(BuildContext context, List<EnglishToday> words) {
-  return Material(
-    color: AppColors.cardContainerColor,
-    elevation: 4,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-    child: InkWell(
-      borderRadius: BorderRadius.all(Radius.circular(24)),
-      splashColor: Colors.black38,
-
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return AllWordsPage(words: words); // truyền danh sách từ
-            },
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-
-        child: Text('Show more', style: AppTextStyle.label),
-      ),
-    ),
-  );
 }

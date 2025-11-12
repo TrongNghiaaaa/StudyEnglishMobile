@@ -23,7 +23,7 @@ class _FavoritePageState extends State<FavoritePage> {
       backgroundColor: AppColors.backgroundColor,
       appBar: CommonAppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: AppColors.blackColor),
           onPressed: () {
             Navigator.push(
               context,
@@ -76,12 +76,12 @@ class _FavoritePageState extends State<FavoritePage> {
                         subtitle: Text(
                           quote,
                           style: AppTextStyle.bodyMedium.copyWith(
-                            color: Colors.white,
+                            color: AppColors.whiteColor,
                           ),
                         ),
                         leading: const Icon(
                           Icons.favorite,
-                          color: Colors.white,
+                          color: AppColors.whiteColor,
                         ),
                       ),
                     );
